@@ -1,0 +1,54 @@
+name: Issue Labeled
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  # issue-labeled:
+  #   if: >-
+  #     github.event.label.name == 'frontend-platform'
+  runs-on: ubuntu-latest
+  
+  steps:
+    - name: Check-Priortization
+      - uses: actions/github-script@v1
+        env:
+          GITHUB_ISSUE: ${{ github.event.issue }}
+        with:
+          script: |
+            console.log(process.env.GITHUB_ISSUE)
+
+
+    # - name: Check-Refinement
+    #   if: >- 
+    #     !contains(github.event.issue.labels.*.name, 'p0')
+    #     ||
+    #     !contains(github.event.issue.labels.*.name, 'p1')
+    #     ||
+    #     !contains(github.event.issue.labels.*.name, 'p2')
+    #     ||
+    #     !contains(github.event.issue.labels.*.name, 'p3')
+    #   )
+    #   run: |
+    #      echo "needs_priortization=true" >> $GITHUB_ENV
+
+
+
+
+    # - name: Checkout
+    #   uses: actions/checkout@v2
+    #   with:
+    #     fetch-depth: 1
+    
+    # - name: Generate 
+    #   run: ./dev/ci/render-pr-preview.sh -d
+
+    #   # https://action-slack.netlify.app/
+    # - uses: 8398a7/action-slack@v3
+    #   with:
+    #     slack_token: ${{ secrets.SLACK_TOKEN }}
+    #     message: |
+    #       @${{ github.actor }} pushed commits.
+    #     channel: develop
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
