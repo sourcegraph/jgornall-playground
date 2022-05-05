@@ -1,0 +1,13 @@
+
+name: Slack Message
+on:
+  workflow_dispatch:
+
+jobs:
+  hello-world:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Output workflow
+        id: random_issue
+        run: |
+          echo "hello"
