@@ -39,7 +39,8 @@ jobs:
     if: >-
       github.event_name != 'workflow_dispatch' && 
       !github.event.issue.assignee &&
-      contains(github.event.issue.labels.*.name, 'frontend-platform')
+      contains(github.event.issue.labels.*.name, 'frontend-platform') &&
+      !contains(github.event.issue.labels.*.name, 'tracking')
     runs-on: ubuntu-latest
     outputs:
       labeled-issue: ${{github.event.issue}}

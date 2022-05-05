@@ -7,9 +7,30 @@ if (!issue) {
     console.assert(issue, 'issue exists',)
     process.exit() 
 }
-const json_issue: GithubIssue = JSON.parse(issue)
+   
+const isPriorityPresent = (json_issue: GithubIssue) => { 
+    let priorityPresent = false;
+    priorityPresent = json_issue.labels?.some((label) => {
+        // match p0, p1, p2
+        return label.name.match(/^fep\/p\d$/) 
+    })
+    return priorityPresent
+}
 
-const generateSlackTemplate = () => {
+const isEstimatePresent = (json_issue: GithubIssue) => { 
+    let estimatePresent = false;
+    estimatePresent = json_issue.labels?.some((label) => {
+        return label.name.startsWith('estimate/')
+    })
+    return estimatePresent
+}
+
+const eligibleToAlert = (json_issue: GithubIssue) => { 
+    const missingData = !isPriorityPresent(json_issue) || !isEstimatePresent(json_issue)
+    return missingData;
+}
+
+const generateSlackTemplate = (json_issue: GithubIssue) => {
     // check estimate
     
     // built via https://api.slack.com/block-kit
@@ -36,10 +57,7 @@ const generateSlackTemplate = () => {
         ]
     }
         
-    let estimatePresent = false;
-    estimatePresent = json_issue.labels?.some((label) => {
-        return label.name.startsWith('estimate/')
-    })
+    let estimatePresent = isEstimatePresent(json_issue)
     if (!estimatePresent) {
         slackMessage.blocks[1].fields.push(
             {
@@ -51,34 +69,33 @@ const generateSlackTemplate = () => {
 
 
     //check priority
-    if (checkPriority) {
-        let priorityPresent = false;
-        priorityPresent = json_issue.labels?.some((label) => {
-            // match p0, p1, p2
-            return label.name.match(/^fep\/p\d$/) 
-        })
-        if (!priorityPresent) {
-            slackMessage.blocks[1].fields.push(
-                {
-                    "type": "mrkdwn",
-                    "text": "*missing <https://github.com/sourcegraph/sourcegraph/labels?q=fep|priority>*: `fep/p0`, `fep/p1`.."
-                }
-            )
-        }
+    let priorityPresent = isPriorityPresent(json_issue)
+    if (!priorityPresent && checkPriority) {
+        slackMessage.blocks[1].fields.push(
+            {
+                "type": "mrkdwn",
+                "text": "*missing <https://github.com/sourcegraph/sourcegraph/labels?q=fep|priority>*: `fep/p0`, `fep/p1`.."
+            }
+        )
     }
     return slackMessage;
 }
 
 
 const sendMessage = async () => {
+    const json_issue: GithubIssue = JSON.parse(issue)
+    if (!eligibleToAlert(json_issue)){
+        console.log('skipped alert')
+        return;
+    }
     const response = await fetch(slackurl, {
-        body: JSON.stringify(generateSlackTemplate()),
+        body: JSON.stringify(generateSlackTemplate(json_issue)),
         headers: {
-          "Content-Type": "application/json"
+        "Content-Type": "application/json"
         },
         method: "POST"
-      })
+    })
     console.log('response', response)
 }
-
+    
 sendMessage();

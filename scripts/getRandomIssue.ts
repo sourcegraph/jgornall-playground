@@ -38,7 +38,7 @@ const getIssues = async  () => {
     }
     
     // step 2 get issues without estimates that are on ${team}
-    const q = `repo:"sourcegraph/sourcegraph" is:issue is:open label:${team} -label:${estimates} sort:created-desc no:assignee`
+    const q = `repo:"sourcegraph/sourcegraph" is:issue is:open label:${team} -label:${estimates} sort:updated-desc no:assignee -label:tracking`
     let issue = {};
     await octokit.paginate(
         'GET /search/issues',
