@@ -2,13 +2,15 @@
 name: Issue Labeled
 on:
   workflow_dispatch:
+    if: github.actor == github.event.repository.owner.login
+    branches: [ master ]
   issues:
     types: [labeled, reopened, opened]
 
 jobs:
   # if manually triggered grab a random issue (will subtitute for cron when I figure out a good cadence)
   issue-scheduled:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' 
     runs-on: ubuntu-latest
     outputs: 
       random-issue: ${{ steps.random_issue.outputs.random-issue }}
@@ -34,7 +36,7 @@ jobs:
         run: |
           npx ts-node getRandomIssue.ts
   
-  # Triggered when an issue is labeled or opened / reopened
+  # Triggered when an issue is labeled or opened / reopened 
   issue-labeled:
     if: >-
       github.event_name != 'workflow_dispatch' && 
