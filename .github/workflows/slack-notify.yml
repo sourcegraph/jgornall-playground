@@ -41,30 +41,7 @@ jobs:
         run: |
           npx ts-node getRandomIssue.ts
 
-  # triggered after either one above finishes
-  issue-output:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: dev/src
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16"
-      - uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: Install dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn --frozen-lockfile --ignore-scripts
-
-      # script to generate a slack message
       - name: Generate Slack Message
-        id: random_issue
         env:
           RANDOM_ISSUE: ${{needs.issue-scheduled.outputs.random-issue}}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
