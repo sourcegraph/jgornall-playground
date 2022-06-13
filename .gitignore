@@ -176,3 +176,5 @@ go.work
 
 # binary
 /sg
+firebase-debug.log
+.runtimeconfig.json

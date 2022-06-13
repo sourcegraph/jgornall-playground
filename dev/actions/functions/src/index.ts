@@ -20,15 +20,17 @@ export interface EstimateValue {
 // const config = functions.config();
 require('dotenv').config()
 // Initializes your app with your bot token and signing secret
+const config = functions.config();
 
+console.log(config.bot);
 const expressReceiver = new ExpressReceiver({
-    signingSecret: process.env.SLACK_SIGNING_SECRET as string,
+    signingSecret: config.bot.slack_signing_secret as string,
     endpoints: '/events',
 })
 
 const app = new App({
     receiver: expressReceiver,
-    token: process.env.SLACK_BOT_TOKEN as string,
+    token: config.bot.slack_bot_token as string,
 })
 
 app.command('/jason-testing', async ({ ack, say }) => {
@@ -50,7 +52,7 @@ app.action('button', async ({ ack, say, action }) => {
 const updateUrlIfChanged = async (issueNumber: string, channelId: string, messageTs: string) => {
     const issue = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
         headers: {
-            Authorization: `token ${process.env.REFINEMENT_BOT}`,
+            Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
@@ -67,7 +69,7 @@ const updateUrlIfChanged = async (issueNumber: string, channelId: string, messag
         { body: issue.data.body },
         {
             headers: {
-                Authorization: `token ${process.env.REFINEMENT_BOT}`,
+                Authorization: `token ${config.bot.refinement_token}`,
                 Accept: 'application/vnd.github.symmetra-preview+json',
             },
         }
@@ -101,12 +103,12 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     // May redo this to traditional oauth flow
     const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
         headers: {
-            Authorization: `token ${process.env.REFINEMENT_BOT}`,
+            Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
 
-    const priorityList: PriorityItem[] = JSON.parse(process.env.PRIORITY_LIST as string) as PriorityItem[]
+    const priorityList: PriorityItem[] = JSON.parse(config.PRIORITY_LIST as string) as PriorityItem[]
     // remove all active priorities
     for (let c = 0; c < labels.data.length; c++) {
         const label = labels.data[c]
@@ -119,7 +121,7 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
                 {
                     headers: {
                         //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                        Authorization: `token ${process.env.REFINEMENT_BOT}`,
+                        Authorization: `token ${config.bot.refinement_token}`,
                         Accept: 'application/vnd.github.symmetra-preview+json',
                     },
                 }
@@ -134,7 +136,7 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
         {
             headers: {
                 //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                Authorization: `token ${process.env.REFINEMENT_BOT}`,
+                Authorization: `token ${config.bot.refinement_token}`,
                 Accept: 'application/vnd.github.symmetra-preview+json',
             },
         }
@@ -177,7 +179,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
     // May redo this to traditional oauth flow
     const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
         headers: {
-            Authorization: `token ${process.env.REFINEMENT_BOT}`,
+            Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
@@ -193,7 +195,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
                 {
                     headers: {
                         //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                        Authorization: `token ${process.env.REFINEMENT_BOT}`,
+                        Authorization: `token ${config.bot.refinement_token}`,
                         Accept: 'application/vnd.github.symmetra-preview+json',
                     },
                 }
@@ -208,7 +210,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
         {
             headers: {
                 //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                Authorization: `token ${process.env.REFINEMENT_BOT}`,
+                Authorization: `token ${config.bot.refinement_token}`,
                 Accept: 'application/vnd.github.symmetra-preview+json',
             },
         }
