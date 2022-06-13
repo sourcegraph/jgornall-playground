@@ -21,8 +21,6 @@ export interface EstimateValue {
 require('dotenv').config()
 // Initializes your app with your bot token and signing secret
 const config = functions.config();
-
-console.log(config.bot);
 const expressReceiver = new ExpressReceiver({
     signingSecret: config.bot.slack_signing_secret as string,
     endpoints: '/events',
@@ -108,7 +106,7 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
         },
     })
 
-    const priorityList: PriorityItem[] = JSON.parse(config.PRIORITY_LIST as string) as PriorityItem[]
+    const priorityList: PriorityItem[] = JSON.parse(config.bot.priority_list as string) as PriorityItem[]
     // remove all active priorities
     for (let c = 0; c < labels.data.length; c++) {
         const label = labels.data[c]
@@ -145,6 +143,7 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
     await updateUrlIfChanged(json.issue, body.channel.id, body.message.ts)
+    console.log('finished? 4')
     await respond({ blocks: body.message.blocks })
     // Update the message to reflect the action
 })
@@ -183,7 +182,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
-
+    console.log('finished? 3')
     // remove all active estimates
     for (let c = 0; c < labels.data.length; c++) {
         const label = labels.data[c]
@@ -202,7 +201,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
             )
         }
     }
-
+    console.log('finished? 2')
     // add priority
     await axios.post(
         `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
@@ -219,8 +218,9 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
     await updateUrlIfChanged(json.issue, body.channel.id, body.message.ts)
-    console.log('finished?')
+    console.log('wakka')
     await respond({ blocks: body.message.blocks })
+    console.log('finished 2', JSON.stringify({ blocks: body.message.blocks }))
     // Update the message to reflect the action
     // Update the message to reflect the action
 })
