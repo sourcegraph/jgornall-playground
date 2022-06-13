@@ -11,8 +11,12 @@ on:
 
 jobs:
   # if manually triggered grab a random issue (will subtitute for cron when I figure out a good cadence)
+  
   issue-scheduled:
-    if: github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        shell: bash
+        working-directory: scripts
     runs-on: ubuntu-latest
     outputs:
       random-issue: ${{ steps.random_issue.outputs.random-issue }}
@@ -30,7 +34,6 @@ jobs:
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn --frozen-lockfile --ignore-scripts
       - name: Get Random Issue
-        working-directory: dev/refinement-bot
         id: random_issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,6 +44,10 @@ jobs:
   # triggered after either one above finishes
   issue-output:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: scripts
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -57,7 +64,6 @@ jobs:
 
       # script to generate a slack message
       - name: Generate Slack Message
-        working-directory: dev/refinement-bot
         id: random_issue
         env:
           RANDOM_ISSUE: ${{needs.issue-scheduled.outputs.random-issue}}
