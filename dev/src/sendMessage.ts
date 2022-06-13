@@ -12,7 +12,7 @@ interface slackMessage {
 }
 
 const octokit = getOctokit(process.env.REFINEMENT_BOT as string)
-const issue: string = process.env.RANDOM_ISSUE || process.env.LABELED_ISSUE || ''
+const issue: string = process.env.RANDOM_ISSUE;
 const slackurl: string = process.env.SLACK_WEBHOOK_URL as string
 const checkPriority = !!(process.env.PRIORITY_LIST as string)
 const priorityList: PriorityItem[] = JSON.parse(process.env.PRIORITY_LIST as string) as PriorityItem[]

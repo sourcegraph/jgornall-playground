@@ -49,7 +49,7 @@ const getIssues = async (): Promise<void> => {
     console.log('output set', issue)
 
     // exposed a variable for other actions to consume
-    setOutput('random-issue', issue)
+    setOutput('issue', issue)
 }
 
 getIssues().then(

@@ -43,7 +43,7 @@ jobs:
       - name: Generate Slack Message
         env:
           REFINEMENT_BOT: ${{ secrets.REFINEMENT_BOT }}
-          RANDOM_ISSUE: ${{needs.issue-scheduled.outputs.random-issue}}
+          RANDOM_ISSUE: ${{ steps.random_issue.outputs.issue }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           PRIORITY_LIST: '[{"value": "fpt/p0","name":"Critical"},{"value": "fpt/p1","name":"Important"},{"value": "fpt/p2","name":"Needed"},{"value": "fpt/p3","name":"Nice to Have"}]'
           CHECK_PRIORITY: true
