@@ -16,7 +16,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: scripts
+        working-directory: dev/src
     runs-on: ubuntu-latest
     outputs:
       random-issue: ${{ steps.random_issue.outputs.random-issue }}
@@ -47,7 +47,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: scripts
+        working-directory: dev/src
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
