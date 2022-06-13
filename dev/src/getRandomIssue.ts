@@ -7,11 +7,11 @@ config()
 
 export type Events = Endpoints['GET /repos/{owner}/{repo}/labels']['response']['data']
 
-console.assert(process.env.GITHUB_TOKEN, 'GITHUB_TOKEN not present')
+console.assert(process.env.REFINEMENT_BOT, 'REFINEMENT_BOT not present')
 console.assert(process.env.TEAM, 'TEAM not present')
 
 // get valus
-const octokit = getOctokit(process.env.GITHUB_TOKEN as string)
+const octokit = getOctokit(process.env.REFINEMENT_BOT as string)
 const team = process.env.TEAM as string
 
 const getIssues = async (): Promise<void> => {
