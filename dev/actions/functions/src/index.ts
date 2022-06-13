@@ -85,6 +85,10 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     )
     let message = relevantBlock.text.text
     message = message.replace(/\n.+/, '')
+    
+    relevantBlock.text.text = message + '\n :loading:'
+    await respond({ blocks: body.message.blocks })
+
     const timestamp = `\`<!date^${parseInt(
         action.action_ts,
         10
@@ -94,10 +98,10 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     relevantBlock.text.text = message
     relevantBlock.block_id = `${Date.now()}`
     relevantBlock.accessory.initial_option = action.selected_option
-    await say('Yaaay! that command works!')
+
+    console.log(JSON.stringify(relevantBlock,null,2))
 
     const json: PrioritySlackValue = JSON.parse(action.selected_option.value) as PrioritySlackValue
-    console.log(json, 'JSON PANDA')
     // May redo this to traditional oauth flow
     const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
         headers: {
@@ -162,6 +166,10 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
 
     let message = relevantBlock.text.text
     message = message.replace(/\n.+/, '')
+
+    relevantBlock.text.text = message + '\n :loading:'
+    await respond({ blocks: body.message.blocks })
+
     const timestamp = `\`<!date^${parseInt(
         action.action_ts,
         10
@@ -171,7 +179,6 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
     relevantBlock.text.text = message
     relevantBlock.block_id = `${Date.now()}`
     relevantBlock.accessory.initial_option = action.selected_option
-    await say('Yaaay! that command works!')
 
     const json: EstimateValue = JSON.parse(action.selected_option.value) as EstimateValue
 
@@ -201,7 +208,7 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
             )
         }
     }
-    console.log('finished? 2')
+
     // add priority
     await axios.post(
         `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
