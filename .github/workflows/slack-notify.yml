@@ -40,9 +40,7 @@ jobs:
 
   # triggered after either one above finishes
   issue-output:
-    if: ${{ always() }} # ensures this runs no matter what
     runs-on: ubuntu-latest
-    needs: [issue-scheduled, issue-labeled] # one of these must finish
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
