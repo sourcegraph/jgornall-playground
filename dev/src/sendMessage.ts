@@ -11,7 +11,7 @@ interface slackMessage {
     blocks: KnownBlock[] | null
 }
 
-const octokit = getOctokit(process.env.GITHUB_TOKEN as string)
+const octokit = getOctokit(process.env.REFINEMENT_BOT as string)
 const issue: string = process.env.RANDOM_ISSUE || process.env.LABELED_ISSUE || ''
 const slackurl: string = process.env.SLACK_WEBHOOK_URL as string
 const checkPriority = !!(process.env.PRIORITY_LIST as string)
@@ -99,7 +99,7 @@ const addSentLabel =  async (json_issue: GithubIssue): Promise<void> => {
         {
             headers: {
                 //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                Authorization: `token ${process.env.GITHUB_TOKEN}`,
+                Authorization: `token ${process.env.REFINEMENT_BOT}`,
                 Accept: 'application/vnd.github.symmetra-preview+json',
             },
         }
@@ -200,7 +200,7 @@ const sendMessage = async (): Promise<void> => {
 
     const response = await axios.post(slackurl,template,{
         headers: {
-            Authorization: `token ${process.env.GITHUB_TOKEN}`,
+            Authorization: `token ${process.env.REFINEMENT_BOT}`,
             'Content-Type': 'application/json',
         },
     })

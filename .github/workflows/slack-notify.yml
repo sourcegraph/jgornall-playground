@@ -36,15 +36,16 @@ jobs:
       - name: Get Random Issue
         id: random_issue
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REFINEMENT_BOT: ${{ secrets.REFINEMENT_BOT }}
           TEAM: "team/frontend-platform"
         run: |
           npx ts-node getRandomIssue.ts
-
       - name: Generate Slack Message
         env:
+          REFINEMENT_BOT: ${{ secrets.REFINEMENT_BOT }}
           RANDOM_ISSUE: ${{needs.issue-scheduled.outputs.random-issue}}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PRIORITY_LIST: '[{"value": "fpt/p0","name":"Critical"},{"value": "fpt/p1","name":"Important"},{"value": "fpt/p2","name":"Needed"},{"value": "fpt/p3","name":"Nice to Have"}]'
           CHECK_PRIORITY: true
         run: |
           npx ts-node sendMessage.ts
