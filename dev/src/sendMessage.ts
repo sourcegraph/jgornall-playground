@@ -196,16 +196,15 @@ const sendMessage = async (): Promise<void> => {
         return
     }
     const template = await generateSlackTemplate(json_issue)
-    console.log(slackurl, JSON.stringify(template,null, 2))
-
-    // const response = await axios.post(slackurl,template,{
-    //     headers: {
-    //         Authorization: `token ${process.env.REFINEMENT_BOT}`,
-    //         'Content-Type': 'application/json',
-    //     },
-    // })
-    // await addSentLabel(json_issue);
-    // console.log(response)
+    // console.log(slackurl, JSON.stringify(template,null, 2))
+    const response = await axios.post(slackurl,template,{
+        headers: {
+            Authorization: `token ${process.env.REFINEMENT_BOT}`,
+            'Content-Type': 'application/json',
+        },
+    })
+    await addSentLabel(json_issue);
+    console.log(response)
 }
 
 sendMessage().then(
