@@ -194,6 +194,11 @@ const updateUrlIfChanged = async (issueNumber: string, channelId: string, messag
     const { permalink } = await app.client.chat.getPermalink({ channel: channelId, message_ts: messageTs })
     const newString = `<refinement-bot>[refinement-slack-thread](${permalink})</refinement-bot>`
     const regex = /<refinement-bot>(.+)<\/refinement-bot>/
+
+    // short circuit if it already contains the string
+    if (issue.data.body.includes(newString)) {
+        return;
+    }
     if (regex.test(issue.data.body)) {
         issue.data.body = issue.data.body.replace(/<refinement-bot>(.+)<\/refinement-bot>/, newString)
     } else {
@@ -221,8 +226,6 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
         (block: any) => block.accessory && block.accessory.action_id === action.action_id
     )
     let message = relevantBlock.text.text
-
-    // generate loading
     message = message.replace(/\n.+/, '')
     await respond((generateLoader(body)))
 
@@ -236,8 +239,6 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     relevantBlock.block_id = `${Date.now()}`
     relevantBlock.accessory.initial_option = action.selected_option
 
-    console.log(JSON.stringify(relevantBlock,null,2))
-
     const json: PrioritySlackValue = JSON.parse(action.selected_option.value) as PrioritySlackValue
     // May redo this to traditional oauth flow
     const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
@@ -247,45 +248,59 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
         },
     })
 
+
     const priorityList: PriorityItem[] = JSON.parse(config.bot.priority_list as string) as PriorityItem[]
     // remove all active priorities
-    for (let c = 0; c < labels.data.length; c++) {
-        const label = labels.data[c]
-        const hasLabel = priorityList.some(item => item.value === label.name)
-        if (hasLabel) {
-            await axios.delete(
-                `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
-                    label.name
-                )}`,
-                {
-                    headers: {
-                        //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                        Authorization: `token ${config.bot.refinement_token}`,
-                        Accept: 'application/vnd.github.symmetra-preview+json',
-                    },
-                }
-            )
+
+    const deleteLabels = async () => {
+        console.log('delete labels')
+        for (let c = 0; c < labels.data.length; c++) {
+            const label = labels.data[c]
+            const hasLabel = priorityList.some(item => item.value === label.name)
+            if (hasLabel && label.name !== json.priority) {
+                await axios.delete(
+                    `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
+                        label.name
+                    )}`,
+                    {
+                        headers: {
+                            //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+                            Authorization: `token ${config.bot.refinement_token}`,
+                            Accept: 'application/vnd.github.symmetra-preview+json',
+                        },
+                    }
+                )
+            }
         }
+        console.log('finish deleteLabels')
     }
 
-    // add priority
-    await axios.post(
-        `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
-        { labels: [json.priority] },
-        {
-            headers: {
-                //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                Authorization: `token ${config.bot.refinement_token}`,
-                Accept: 'application/vnd.github.symmetra-preview+json',
-            },
-        }
-    )
-
+    const updateLabels = async () => {
+        // add priority
+        console.log('updateLabels')
+        await axios.post(
+            `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
+            { labels: [json.priority] },
+            {
+                headers: {
+                    //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+                    Authorization: `token ${config.bot.refinement_token}`,
+                    Accept: 'application/vnd.github.symmetra-preview+json',
+                },
+            }
+        )
+        console.log('finish updateLabels')
+    }
+      
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
-    await updateUrlIfChanged(json.issue, body.channel.id, body.message.ts)
-    console.log('finished? 4')
-    await respond({ blocks: body.message.blocks })
+    await Promise.all([
+        deleteLabels(),
+        updateLabels(),
+        updateUrlIfChanged(json.issue, body.channel.id, body.message.ts),
+        respond({ blocks: body.message.blocks })
+    ])
+    console.log('done')
     // Update the message to reflect the action
 })
 
@@ -326,44 +341,49 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
         },
     })
     console.log('finished? 3')
-    // remove all active estimates
-    for (let c = 0; c < labels.data.length; c++) {
-        const label = labels.data[c]
-        if (label.name.match(/^estimate\//)) {
-            await axios.delete(
-                `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
-                    label.name
-                )}`,
-                {
-                    headers: {
-                        //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                        Authorization: `token ${config.bot.refinement_token}`,
-                        Accept: 'application/vnd.github.symmetra-preview+json',
-                    },
-                }
-            )
+    const deleteLabels = async () => {
+        // remove all active estimates
+        for (let c = 0; c < labels.data.length; c++) {
+            const label = labels.data[c]
+            if (label.name.match(/^estimate\//) && label.name !== json.estimate) {
+                await axios.delete(
+                    `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
+                        label.name
+                    )}`,
+                    {
+                        headers: {
+                            //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+                            Authorization: `token ${config.bot.refinement_token}`,
+                            Accept: 'application/vnd.github.symmetra-preview+json',
+                        },
+                    }
+                )
+            }
         }
     }
-
-    // add priority
-    await axios.post(
-        `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
-        { labels: [json.estimate] },
-        {
-            headers: {
-                //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                Authorization: `token ${config.bot.refinement_token}`,
-                Accept: 'application/vnd.github.symmetra-preview+json',
-            },
-        }
-    )
+    const updateLabels = async () => {
+        // add priority
+        await axios.post(
+            `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
+            { labels: [json.estimate] },
+            {
+                headers: {
+                    //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+                    Authorization: `token ${config.bot.refinement_token}`,
+                    Accept: 'application/vnd.github.symmetra-preview+json',
+                },
+            }
+        )
+    }
 
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
-    await updateUrlIfChanged(json.issue, body.channel.id, body.message.ts)
-    console.log('wakka')
-    await respond({ blocks: body.message.blocks })
-    console.log('finished 2', JSON.stringify({ blocks: body.message.blocks }))
+    await Promise.all([
+        deleteLabels(),
+        updateLabels(),
+        updateUrlIfChanged(json.issue, body.channel.id, body.message.ts),
+        respond({ blocks: body.message.blocks })
+    ])
     // Update the message to reflect the action
     // Update the message to reflect the action
 })
