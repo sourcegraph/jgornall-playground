@@ -185,6 +185,7 @@ const generateLoader = (body: any) => {
     return { blocks: clone.message.blocks};
 }
 const updateUrlIfChanged = async (issueNumber: string, channelId: string, messageTs: string) => {
+    console.time('updateUrlIfChanged')
     const issue = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
         headers: {
             Authorization: `token ${config.bot.refinement_token}`,
@@ -197,6 +198,7 @@ const updateUrlIfChanged = async (issueNumber: string, channelId: string, messag
 
     // short circuit if it already contains the string
     if (issue.data.body.includes(newString)) {
+        console.timeEnd('updateUrlIfChanged')
         return;
     }
     if (regex.test(issue.data.body)) {
@@ -214,6 +216,7 @@ const updateUrlIfChanged = async (issueNumber: string, channelId: string, messag
             },
         }
     )
+    console.timeEnd('updateUrlIfChanged')
 }
 
 app.action('priority_select', async ({ ack, say, action: actionBase, respond, body: bodyBase }) => {
@@ -253,7 +256,7 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     // remove all active priorities
 
     const deleteLabels = async () => {
-        console.log('delete labels')
+        console.time('deleteLabels')
         for (let c = 0; c < labels.data.length; c++) {
             const label = labels.data[c]
             const hasLabel = priorityList.some(item => item.value === label.name)
@@ -272,12 +275,12 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
                 )
             }
         }
-        console.log('finish deleteLabels')
+        console.timeEnd('deleteLabels')
     }
 
     const updateLabels = async () => {
         // add priority
-        console.log('updateLabels')
+        console.time('updateLabels')
         await axios.post(
             `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
             { labels: [json.priority] },
@@ -289,17 +292,18 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
                 },
             }
         )
-        console.log('finish updateLabels')
+        console.timeEnd('updateLabels')
     }
       
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
+    
     await Promise.all([
         deleteLabels(),
         updateLabels(),
         updateUrlIfChanged(json.issue, body.channel.id, body.message.ts),
-        respond({ blocks: body.message.blocks })
     ])
+    await respond({ blocks: body.message.blocks })
     console.log('done')
     // Update the message to reflect the action
 })
@@ -340,8 +344,8 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
-    console.log('finished? 3')
     const deleteLabels = async () => {
+        console.time('deleteLabels')
         // remove all active estimates
         for (let c = 0; c < labels.data.length; c++) {
             const label = labels.data[c]
@@ -360,9 +364,11 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
                 )
             }
         }
+        console.timeEnd('deleteLabels')
     }
     const updateLabels = async () => {
         // add priority
+        console.time('updateLabels')
         await axios.post(
             `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
             { labels: [json.estimate] },
@@ -374,16 +380,18 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
                 },
             }
         )
+        console.time('updateLabels')
     }
 
     // update the message
     // console.log(JSON.stringify(bodyBase, null, 2))
+    
     await Promise.all([
         deleteLabels(),
         updateLabels(),
         updateUrlIfChanged(json.issue, body.channel.id, body.message.ts),
-        respond({ blocks: body.message.blocks })
     ])
+    await respond({ blocks: body.message.blocks })
     // Update the message to reflect the action
     // Update the message to reflect the action
 })
