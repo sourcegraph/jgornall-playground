@@ -127,7 +127,7 @@ const generateSlackTemplate = async (json_issue: GithubIssue): Promise<slackMess
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: 'Please :thread: off this message to discuss',
+                    text: 'Please :thread: off this message to discuss and update labels',
                 },
             },
         ],
@@ -146,18 +146,18 @@ const generateSlackTemplate = async (json_issue: GithubIssue): Promise<slackMess
                 '*missing <https://github.com/sourcegraph/sourcegraph/labels?q=estimate|estimate>:*\n`estimate/0.5d` `estimate/5d`...',
         })
         const estimates = await generateEstimatesBlock(json_issue)
-        slackMessage.blocks?.push({
-            type: 'section',
-            text: {
-                type: 'mrkdwn',
-                text: 'Pick an estimate from the list',
-            },
-            accessory: {
-                type: 'static_select',
-                action_id: 'estimate_select',
-                options: estimates,
-            },
-        })
+        // slackMessage.blocks?.push({
+        //     type: 'section',
+        //     text: {
+        //         type: 'mrkdwn',
+        //         text: 'Pick an estimate from the list',
+        //     },
+        //     accessory: {
+        //         type: 'static_select',
+        //         action_id: 'estimate_select',
+        //         options: estimates,
+        //     },
+        // })
     }
 
     // check priority
@@ -173,18 +173,18 @@ const generateSlackTemplate = async (json_issue: GithubIssue): Promise<slackMess
                 priorityList[0].value
             )}|${priorityList[0].name}>..`,
         })
-        slackMessage.blocks?.push({
-            type: 'section',
-            text: {
-                type: 'mrkdwn',
-                text: 'Pick a priority from the list',
-            },
-            accessory: {
-                type: 'static_select',
-                action_id: 'priority_select',
-                options: generatePriorityBlock(json_issue),
-            },
-        })
+        // slackMessage.blocks?.push({
+        //     type: 'section',
+        //     text: {
+        //         type: 'mrkdwn',
+        //         text: 'Pick a priority from the list',
+        //     },
+        //     accessory: {
+        //         type: 'static_select',
+        //         action_id: 'priority_select',
+        //         options: generatePriorityBlock(json_issue),
+        //     },
+        // })
     }
     return slackMessage
 }
@@ -198,14 +198,14 @@ const sendMessage = async (): Promise<void> => {
     const template = await generateSlackTemplate(json_issue)
     console.log(slackurl, JSON.stringify(template,null, 2))
 
-    const response = await axios.post(slackurl,template,{
-        headers: {
-            Authorization: `token ${process.env.REFINEMENT_BOT}`,
-            'Content-Type': 'application/json',
-        },
-    })
-    await addSentLabel(json_issue);
-    console.log(response)
+    // const response = await axios.post(slackurl,template,{
+    //     headers: {
+    //         Authorization: `token ${process.env.REFINEMENT_BOT}`,
+    //         'Content-Type': 'application/json',
+    //     },
+    // })
+    // await addSentLabel(json_issue);
+    // console.log(response)
 }
 
 sendMessage().then(

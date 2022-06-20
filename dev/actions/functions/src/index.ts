@@ -2,7 +2,14 @@ import { App, ExpressReceiver } from '@slack/bolt'
 import * as functions from 'firebase-functions'
 import axios from 'axios'
 import { BlockAction } from "@slack/bolt/dist/types/actions/block-action"
+const fetch = require('node-fetch');
+const http = require('http');
+const https = require('https');
 
+const httpAgent = new http.Agent({keepAlive: true});
+const httpsAgent = new https.Agent({keepAlive: true});
+
+const agent = httpsAgent;
 export interface PriorityItem {
     value: string
     name: string
@@ -186,36 +193,54 @@ const generateLoader = (body: any) => {
 }
 const updateUrlIfChanged = async (issueNumber: string, channelId: string, messageTs: string) => {
     console.time('updateUrlIfChanged')
-    const issue = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
+    // const issue = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
+    //     headers: {
+    //         Authorization: `token ${config.bot.refinement_token}`,
+    //         Accept: 'application/vnd.github.symmetra-preview+json',
+    //     },
+    // })
+    const response = await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
+        method: 'GET',
+        agent,
         headers: {
             Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
+    const issue: any = await response.json();
     const { permalink } = await app.client.chat.getPermalink({ channel: channelId, message_ts: messageTs })
     const newString = `<refinement-bot>[refinement-slack-thread](${permalink})</refinement-bot>`
     const regex = /<refinement-bot>(.+)<\/refinement-bot>/
 
     // short circuit if it already contains the string
-    if (issue.data.body.includes(newString)) {
+    if (issue.body.includes(newString)) {
         console.timeEnd('updateUrlIfChanged')
         return;
     }
-    if (regex.test(issue.data.body)) {
-        issue.data.body = issue.data.body.replace(/<refinement-bot>(.+)<\/refinement-bot>/, newString)
+    if (regex.test(issue.body)) {
+        issue.body = issue.body.replace(/<refinement-bot>(.+)<\/refinement-bot>/, newString)
     } else {
-        issue.data.body = issue.data.body.concat(`\n${newString}`)
+        issue.body = issue.body.concat(`\n${newString}`)
     }
-    await axios.patch(
-        `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`,
-        { body: issue.data.body },
-        {
-            headers: {
-                Authorization: `token ${config.bot.refinement_token}`,
-                Accept: 'application/vnd.github.symmetra-preview+json',
-            },
-        }
-    )
+    await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`, {
+        method: 'PATCH',
+        body: JSON.stringify(issue.body),
+        agent,
+        headers: {
+            Authorization: `token ${config.bot.refinement_token}`,
+            Accept: 'application/vnd.github.symmetra-preview+json',
+        },
+    })
+    // await axios.patch(
+    //     `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${issueNumber}`,
+    //     { body: issue.data.body },
+    //     {
+    //         headers: {
+    //             Authorization: `token ${config.bot.refinement_token}`,
+    //             Accept: 'application/vnd.github.symmetra-preview+json',
+    //         },
+    //     }
+    // )
     console.timeEnd('updateUrlIfChanged')
 }
 
@@ -244,12 +269,21 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
 
     const json: PrioritySlackValue = JSON.parse(action.selected_option.value) as PrioritySlackValue
     // May redo this to traditional oauth flow
-    const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+    // const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+    //     headers: {
+    //         Authorization: `token ${config.bot.refinement_token}`,
+    //         Accept: 'application/vnd.github.symmetra-preview+json',
+    //     },
+    // })
+    const response = await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+        method: 'GET',
+        agent,
         headers: {
             Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
+    const labels:any = await response.json();
 
 
     const priorityList: PriorityItem[] = JSON.parse(config.bot.priority_list as string) as PriorityItem[]
@@ -257,22 +291,34 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
 
     const deleteLabels = async () => {
         console.time('deleteLabels')
-        for (let c = 0; c < labels.data.length; c++) {
-            const label = labels.data[c]
+        for (let c = 0; c < labels.length; c++) {
+            const label = labels[c]
             const hasLabel = priorityList.some(item => item.value === label.name)
             if (hasLabel && label.name !== json.priority) {
-                await axios.delete(
-                    `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
-                        label.name
-                    )}`,
-                    {
-                        headers: {
-                            //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                            Authorization: `token ${config.bot.refinement_token}`,
-                            Accept: 'application/vnd.github.symmetra-preview+json',
-                        },
-                    }
-                )
+                await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
+                    label.name
+                )}`, {
+                    method: 'DELETE',
+                    agent,
+                    headers: {
+                        Authorization: `token ${config.bot.refinement_token}`,
+                        Accept: 'application/vnd.github.symmetra-preview+json',
+                    },
+                })
+
+
+                // await axios.delete(
+                //     `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
+                //         label.name
+                //     )}`,
+                //     {
+                //         headers: {
+                //             //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+                //             Authorization: `token ${config.bot.refinement_token}`,
+                //             Accept: 'application/vnd.github.symmetra-preview+json',
+                //         },
+                //     }
+                // )
             }
         }
         console.timeEnd('deleteLabels')
@@ -281,17 +327,28 @@ app.action('priority_select', async ({ ack, say, action: actionBase, respond, bo
     const updateLabels = async () => {
         // add priority
         console.time('updateLabels')
-        await axios.post(
-            `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
-            { labels: [json.priority] },
-            {
-                headers: {
-                    //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                    Authorization: `token ${config.bot.refinement_token}`,
-                    Accept: 'application/vnd.github.symmetra-preview+json',
-                },
-            }
-        )
+        // await axios.post(
+        //     `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
+        //     { labels: [json.priority] },
+        //     {
+        //         headers: {
+        //             //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
+        //             Authorization: `token ${config.bot.refinement_token}`,
+        //             Accept: 'application/vnd.github.symmetra-preview+json',
+        //         },
+        //     }
+        // )
+        await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                labels: [json.priority] 
+            }),
+            agent,
+            headers: {
+                Authorization: `token ${config.bot.refinement_token}`,
+                Accept: 'application/vnd.github.symmetra-preview+json',
+            },
+        })
         console.timeEnd('updateLabels')
     }
       
@@ -338,30 +395,37 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
     const json: EstimateValue = JSON.parse(action.selected_option.value) as EstimateValue
 
     // May redo this to traditional oauth flow
-    const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+    // const labels = await axios.get(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+    //     headers: {
+    //         Authorization: `token ${config.bot.refinement_token}`,
+    //         Accept: 'application/vnd.github.symmetra-preview+json',
+    //     },
+    // })
+    const response = await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+        method: 'GET',
+        agent,
         headers: {
             Authorization: `token ${config.bot.refinement_token}`,
             Accept: 'application/vnd.github.symmetra-preview+json',
         },
     })
+    const labels: any = await response.json();
     const deleteLabels = async () => {
         console.time('deleteLabels')
         // remove all active estimates
-        for (let c = 0; c < labels.data.length; c++) {
-            const label = labels.data[c]
+        for (let c = 0; c < labels.length; c++) {
+            const label = labels[c]
             if (label.name.match(/^estimate\//) && label.name !== json.estimate) {
-                await axios.delete(
-                    `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
-                        label.name
-                    )}`,
-                    {
-                        headers: {
-                            //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                            Authorization: `token ${config.bot.refinement_token}`,
-                            Accept: 'application/vnd.github.symmetra-preview+json',
-                        },
-                    }
-                )
+                await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels/${encodeURIComponent(
+                    label.name
+                )}`, {
+                    method: 'DELETE',
+                    agent,
+                    headers: {
+                        Authorization: `token ${config.bot.refinement_token}`,
+                        Accept: 'application/vnd.github.symmetra-preview+json',
+                    },
+                })
             }
         }
         console.timeEnd('deleteLabels')
@@ -369,18 +433,18 @@ app.action('estimate_select', async ({ ack, say, action: actionBase, respond, bo
     const updateLabels = async () => {
         // add priority
         console.time('updateLabels')
-        await axios.post(
-            `https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`,
-            { labels: [json.estimate] },
-            {
-                headers: {
-                    //'Authorization': `token ${process.env[`SLACK_USER_${body.user.username}`]}`,
-                    Authorization: `token ${config.bot.refinement_token}`,
-                    Accept: 'application/vnd.github.symmetra-preview+json',
-                },
-            }
-        )
-        console.time('updateLabels')
+        await fetch(`https://api.github.com/repos/sourcegraph/sourcegraph/issues/${json.issue}/labels`, {
+            method: 'POST',
+            body: JSON.stringify( { 
+                labels: [json.estimate] 
+            }),
+            agent,
+            headers: {
+                Authorization: `token ${config.bot.refinement_token}`,
+                Accept: 'application/vnd.github.symmetra-preview+json',
+            },
+        })
+        console.timeEnd('updateLabels')
     }
 
     // update the message
