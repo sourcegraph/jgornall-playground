@@ -2,7 +2,7 @@
 name: Issue Labeled
 on:
   schedule:
-    - cron: '30 13 * * 1-5' # At 13:30 on every day-of-week from Monday through Friday https://crontab.guru/#30_13_*_*_1-5
+    - cron: '30,35,40 13 * * 1-5' # At 13:30 on every day-of-week from Monday through Friday https://crontab.guru/#30_13_*_*_1-5
   # will turn this on for real once I test post merge
   workflow_dispatch:
     if: github.actor == 'jasongornall'
