@@ -33,6 +33,7 @@ const getIssues = async (): Promise<void> => {
             throw new Error('missing estimates')
         }
     } catch {
+        console.log(JSON.stringify(result.repository.labels, null, 2))
         setFailed('unable to get estimate labels')
         return
     }
