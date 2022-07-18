@@ -17,3 +17,8 @@
 | Name | URL  | Environment Variables  | Notes  | 
 | --- | :-- | :--: | :- |
 | safe-settings  | wakka  | CRON  |  | 
+
+
+| Name   | Url   |
+| ------ | ----- |
+| walkka | wakka |
