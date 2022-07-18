@@ -27,3 +27,7 @@
 | Name   | Url   |
 | :--  | :--: |
 | walkka | wakka |
+
+| Name   | Url   | Environment Variables |
+| :--  | :--: | --- |
+| walkka | wakka | testing |
