@@ -65,3 +65,8 @@
 | Name |  URL  | Environment Variables | Notes  | 
 | :-- | :--: | --- | :-- |
 | safe-settings | safe-settings | CRON | |
+
+
+| Name   | Url   | Environment Variables |  Notes  |
+| :-- | :--: | --- | :-- |
+| safe-settings | safe-settings | CRON | |
