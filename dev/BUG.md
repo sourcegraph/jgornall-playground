@@ -52,4 +52,8 @@
 
 | Name   | Url   | Environment Variables |  Notes  |
 | :--  | :--: | --- | :-- |
-| walkka | wakka | testing |  | 
+| walkka | wakka | testing |  |
+
+| Name | URL  | Environment Variables  | Notes  | 
+| --- | :-- | :--: | :-- |
+| safe-settings | safe-settings | CRON | |
